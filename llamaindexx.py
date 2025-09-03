@@ -1,27 +1,24 @@
 import os
 from pathlib import Path
 from dotenv import load_dotenv
-from evolution_openai import OpenAI
+from openai import OpenAI
 
 load_dotenv()
 
-DATA_DIR   = "data"   # папка, из которой берём тексты
+DATA_DIR = "data"  # папка, из которой берём тексты
+
+# Конфигурация для Cloud.ru Foundation Models
 MODEL_NAME = os.getenv("MODEL")
+API_KEY = os.getenv("API_KEY")
+BASE_URL = os.getenv("BASE_URL")
+
 MAX_TOKENS = 1000
 TEMPERATURE = 0.7
 
-API_KEY   = os.getenv("API_KEYY")
-BASE_URL  = os.getenv("BASE_URL")
-PROJECT_ID = os.getenv("PROJECT_IDD")
-KEY_ID    = os.getenv("API_TOKENN")
-SECRET    = os.getenv("API_SECRETT")
-
-# Инициализация клиента
+# Инициализация клиента OpenAI для Cloud.ru
 client = OpenAI(
-    key_id=KEY_ID,
-    secret=SECRET,
-    base_url=BASE_URL,
-    project_id=PROJECT_ID
+    api_key=API_KEY,
+    base_url=BASE_URL
 )
 
 def load_files_from_dir(dir_path=DATA_DIR):
@@ -44,6 +41,7 @@ def search_in_files(query: str, files: list):
         max_tokens=MAX_TOKENS,
         temperature=TEMPERATURE,
     )
+
     return response.choices[0].message.content
 
 if __name__ == "__main__":
