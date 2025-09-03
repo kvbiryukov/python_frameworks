@@ -1,54 +1,61 @@
-from evolution_openai import OpenAI
-from crewai import Agent, Task, Crew, BaseLLM
 import os
 from dotenv import load_dotenv
+from openai import OpenAI
+from crewai import Agent, Task, Crew, BaseLLM
 
 load_dotenv()
 
-# Конфигурация
-config = {
-    "key_id": os.getenv("API_TOKEN"),
-    "secret": os.getenv("API_SECRET"),
-    "project_id": os.getenv("PROJECT_ID"),
-    "model": os.getenv("MODEL"),
-    "base_url": os.getenv("BASE_URL")
-}
+API_KEY = os.getenv("API_KEY")
+MODEL = os.getenv("MODEL")
+BASE_URL = os.getenv("BASE_URL")
 
-
-class EvolutionLLM(BaseLLM):
-    """Адаптер evolution-openai для CrewAI"""
+class CloudRuLLM(BaseLLM):
+    """Адаптер для Cloud.ru Foundation Models через стандартную библиотеку OpenAI"""
 
     def __init__(self):
-        super().__init__(model=config["model"])
+        super().__init__(model=MODEL)
         self.client = OpenAI(
-            key_id=config["key_id"],
-            secret=config["secret"],
-            project_id=config["project_id"],
-            base_url=config["base_url"]
+            api_key=API_KEY,
+            base_url=BASE_URL
         )
 
     def call(self, messages, **kwargs):
         if isinstance(messages, str):
             messages = [{"role": "user", "content": messages}]
+
         response = self.client.chat.completions.create(
-            model=config["model"],
+            model=MODEL,
             messages=messages,
-            temperature=kwargs.get("temperature", 0.7),
-            max_tokens=kwargs.get("max_tokens", 500)
+            temperature=0.7,
+            max_tokens=2000
         )
+
         return response.choices[0].message.content
 
-
 # Инициализация адаптера
-llm = EvolutionLLM()
+llm = CloudRuLLM()
 
 # Создание агентов
 researcher = Agent(
     role="Исследователь",
-    goal="Анализировать темы и собирать ключевую информацию",
+    goal="Провести структурированный анализ применения технологий искусственного интеллекта в российском бизнесе за период 2023–2025 года.",
     backstory="""
-    Вы опытный аналитик-исследователь. Умеете быстро разбираться в сложных темах
-    и выделять самую важную информацию. Ваши анализы всегда структурированы и точны.
+    Ты эксперт-аналитик с опытом работы в сфере корпоративных инноваций и ИИ. Отличается глубоким пониманием рынков, умеет критически оценивать
+    тренды и проверять источники. Всегда выделяет главное и избегает предположений без фактов.
+    """,
+    llm=llm,
+    verbose=True
+)
+
+writer = Agent(
+    role="Технический писатель",
+    goal="""
+    Создать краткий, структурированный и деловой отчет на основе полученного анализа;
+    акцент на ясность, практические рекомендации и бизнес-ориентированность.
+    """,
+    backstory="""
+    Ты профессиональный технический писатель с опытом подготовки деловых обзоров и рекомендаций для руководителей.
+    Отличается умением переводить сложные выводы на простой, понятный для бизнес-аудитории язык без потери точности.
     """,
     llm=llm,
     verbose=True
@@ -57,38 +64,32 @@ researcher = Agent(
 # Определение задач
 research_task = Task(
     description="""
-    Проанализируйте тему: "Применение ИИ в российском бизнесе"
-    Выясните:
-    1. Основные направления использования
-    2. Ключевые компании и решения
-    3. Главные тренды
+    Собери актуальный аналитический обзор по теме: «Применение ИИ в российском бизнесе в 2023–2025».
+    Требуется описать:
+    — главные направления использования (3-4);
+    — ключевые компании и конкретные решения (3-4);
+    — основные тренды и вызовы (3-4).
+    Оформи анализ как структурированный список с пояснениями. Ответ до 400 слов
     """,
     agent=researcher,
-    expected_output="Аналитический обзор с ключевыми выводами"
-)
-
-writer = Agent(
-    role="Технический писатель",
-    goal="Создавать понятные и структурированные тексты на основе анализа",
-    backstory="""
-    Вы профессиональный технический писатель. Превращаете сложную информацию
-    в понятные и хорошо структурированные тексты. Ваш стиль — четкий и деловой.
-    """,
-    llm=llm,
-    verbose=True
+    expected_output="""
+    Аналитический отчет, включающий список направлений применения, перечень компаний с их решениями и описание
+    3–5 актуальных трендов, с четкими ссылками на факты или источники.
+    """
 )
 
 writing_task = Task(
     description="""
-    На основе проведённого исследования создайте краткий отчёт:
-    1. Краткое резюме (2–3 предложения)
-    2. Основные выводы (3–4 пункта)
-    3. Рекомендации (2–3 пункта)
-    Стиль: деловой, конкретный
-    Объём: 150–200 слов
+    На основе аналитического обзора подготовь краткий бизнес-отчет:
+    — резюме (2–3 предложения);
+    — 3–4 основных вывода (маркированный список);
+    — 2–3 рекомендации для бизнеса (маркированный список).
+    Должен быть структурирован, лаконичен (150–200 слов), без лишних деталей.
     """,
     agent=writer,
-    expected_output="Структурированный отчёт",
+    expected_output="""
+    Компактный, структурированный отчет для бизнес-аудитории: резюме темы, основные выводы по анализу, практические рекомендации.
+    """,
     context=[research_task]
 )
 
@@ -99,5 +100,6 @@ team = Crew(
     verbose=True
 )
 
-result = team.kickoff()
-print(result)
+if __name__ == "__main__":
+    result = team.kickoff()
+    print(result)
