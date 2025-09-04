@@ -10,14 +10,14 @@ from openai import OpenAI
 
 load_dotenv()
 
-API_KEY  = os.getenv("API_KEYY")
+API_KEY  = os.getenv("API_KEY")
 MODEL    = os.getenv("MODEL")
-BASE_URL = os.getenv("BASE_URLL")
+BASE_URL = os.getenv("BASE_URL")
 
-TEMPERATURE = 0.7
-MAX_TOKENS = 5000
+TEMPERATURE = os.getenv("TEMPERATURE")
+MAX_TOKENS = os.getenv("MAX_TOKENS")
 
-class CloudRuChatService(ChatCompletionClientBase):
+class AgentService(ChatCompletionClientBase):
 
     def __init__(self, service_id: str):
         super().__init__(service_id=service_id, ai_model_id=MODEL)
@@ -40,7 +40,7 @@ class CloudRuChatService(ChatCompletionClientBase):
 
 async def main():
     kernel = Kernel()
-    svc = CloudRuChatService("cloudru")
+    svc = AgentService("cloudru")
     kernel.add_service(svc)
 
     researcher = ChatCompletionAgent(
@@ -100,3 +100,4 @@ async def main():
 
 if __name__ == "__main__":
     asyncio.run(main())
+
