@@ -10,9 +10,9 @@ from openai import OpenAI
 
 load_dotenv()
 
-API_KEY  = os.getenv("API_KEY")
+API_KEY  = os.getenv("API_KEYY")
 MODEL    = os.getenv("MODEL")
-BASE_URL = os.getenv("BASE_URL")
+BASE_URL = os.getenv("BASE_URLL")
 
 TEMPERATURE = 0.7
 MAX_TOKENS = 5000
