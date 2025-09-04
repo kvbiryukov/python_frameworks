@@ -16,8 +16,8 @@ API_KEY = os.getenv("API_KEY")
 BASE_URL = os.getenv("BASE_URL")
 MODEL_NAME = os.getenv("MODEL")
 
-MAX_TOKENS = 1000
-TEMPERATURE = 0.7
+MAX_TOKENS = os.getenv("MAX_TOKENS")
+TEMPERATURE = os.getenv("TEMPERATURE")
 
 # Системный промпт для модели
 system_prompt = """
@@ -73,7 +73,7 @@ conversation = ConversationChain(
 )
 
 if __name__ == "__main__":
-    print("Чат с моделью (для выхода введите 'exit' или 'quit')\n")
+    print("💬 Чат с моделью (для выхода введите 'exit' или 'quit')\n")
     while True:
         user_input = input("Вы: ").strip()
         if user_input.lower() in {"exit", "quit"}:
