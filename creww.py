@@ -1,39 +1,24 @@
 import os
 from dotenv import load_dotenv
-from openai import OpenAI
-from crewai import Agent, Task, Crew, BaseLLM
+from crewai import Agent, Task, Crew, LLM
 
+# Загрузка переменных окружения
 load_dotenv()
-
 API_KEY = os.getenv("API_KEY")
-MODEL = os.getenv("MODEL")
+MODEL = os.getenv("MODEL") 
 BASE_URL = os.getenv("BASE_URL")
 
-class CloudRuLLM(BaseLLM):
-    """Адаптер для Cloud.ru Foundation Models через стандартную библиотеку OpenAI"""
+TEMPERATURE = os.getenv("TEMPERATURE")
+MAX_TOKENS = os.getenv("MAX_TOKENS")
 
-    def __init__(self):
-        super().__init__(model=MODEL)
-        self.client = OpenAI(
-            api_key=API_KEY,
-            base_url=BASE_URL
-        )
-
-    def call(self, messages, **kwargs):
-        if isinstance(messages, str):
-            messages = [{"role": "user", "content": messages}]
-
-        response = self.client.chat.completions.create(
-            model=MODEL,
-            messages=messages,
-            temperature=0.7,
-            max_tokens=2000
-        )
-
-        return response.choices[0].message.content
-
-# Инициализация адаптера
-llm = CloudRuLLM()
+# Создание LLM объекта CrewAI с префиксом openai/ для совместимости
+llm = LLM(
+    model=f"openai/{MODEL}",  # Добавляем префикс openai/
+    api_key=API_KEY,
+    base_url=BASE_URL,
+    temperature=TEMPERATURE,
+    max_tokens=MAX_TOKENS
+)
 
 # Создание агентов
 researcher = Agent(
