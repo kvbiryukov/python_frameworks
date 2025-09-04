@@ -21,8 +21,8 @@ MODEL_NAME = os.getenv("MODEL")
 API_KEY = os.getenv("API_KEY")
 BASE_URL = os.getenv("BASE_URL")
 
-MAX_TOKENS = 2000
-TEMPERATURE = 0.7
+MAX_TOKENS = os.getenv("MAX_TOKENS")
+TEMPERATURE = os.getenv("TEMPERATURE")
 
 embedding_model = SentenceTransformer(EMBEDDING_MODEL)
 
@@ -98,3 +98,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+
